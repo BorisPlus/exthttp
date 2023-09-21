@@ -1,3 +1,3 @@
-module github.com/borisplus/exthttp
+module github.com/BorisPlus/exthttp
 
 go 1.20
