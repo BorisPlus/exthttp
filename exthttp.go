@@ -128,22 +128,27 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		fmt.Printf("%s\n", v)
 	}
 	if h.headersLogsDir != "" {
-		now := time.Now().Format(time.RFC3339)
-		logpath := path.Join(h.headersLogsDir, now)
+		now := time.Now()
+		//
+		logpath := path.Join(h.headersLogsDir, now.Format("2006-01-02 03:04:05"))
 		file, err := os.Create(logpath)
 		if err != nil {
 			logInstance().Error(err.Error())
 		}
-		file.Write([]byte(now))
+		_, err = file.Write([]byte(now.Format(time.RFC3339)))
+		if err != nil {
+			logInstance().Error(err.Error())
+		}
 		file.Close()
+		//
 		logpath = path.Join(h.headersLogsDir, "headers.json")
 		_ = os.Remove(logpath)
 		file, err = os.Create(logpath)
 		if err != nil {
 			logInstance().Error(err.Error())
 		}
-		jsonData := []byte{}
-		err = json.Unmarshal(jsonData, &r.Header)
+		r.Header.Add("Custom-Header", "Custom-Cookey")
+		jsonData, err := json.Marshal(r.Header)
 		if err != nil {
 			logInstance().Error(err.Error())
 		}
