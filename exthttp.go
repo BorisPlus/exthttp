@@ -122,39 +122,29 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	_, err := rw.Write(buffer.Bytes())
 	if err != nil {
 		logInstance().Error(err.Error())
-	}
-	for k, v := range r.Header {
-		fmt.Printf("%s\n", k)
-		fmt.Printf("%s\n", v)
+		return
 	}
 	if h.headersLogsDir != "" {
-		now := time.Now()
 		//
-		logpath := path.Join(h.headersLogsDir, now.Format("2006-01-02 03:04:05"))
+		logpath := path.Join(h.headersLogsDir, "headers.json")
+		//
+		_ = os.Remove(logpath)
+		//
 		file, err := os.Create(logpath)
 		if err != nil {
 			logInstance().Error(err.Error())
+			return
 		}
-		_, err = file.Write([]byte(now.Format(time.RFC3339)))
-		if err != nil {
-			logInstance().Error(err.Error())
-		}
-		file.Close()
-		//
-		logpath = path.Join(h.headersLogsDir, "headers.json")
-		_ = os.Remove(logpath)
-		file, err = os.Create(logpath)
-		if err != nil {
-			logInstance().Error(err.Error())
-		}
-		r.Header.Add("Custom-Header", "Custom-Cookey")
+		r.Header.Set("my-custom-date-header", time.Now().Format("2006.01.02 15:04:05"))
 		jsonData, err := json.Marshal(r.Header)
 		if err != nil {
 			logInstance().Error(err.Error())
+			return
 		}
 		_, err = file.Write(jsonData)
 		if err != nil {
 			logInstance().Error(err.Error())
+			return
 		}
 		file.Close()
 	}
