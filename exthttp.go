@@ -123,6 +123,10 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logInstance().Error(err.Error())
 	}
+	for k, v := range r.Header {
+		fmt.Printf("%s\n", k)
+		fmt.Printf("%s\n", v)
+	}
 	if h.headersLogsDir != "" {
 		now := time.Now().Format(time.RFC3339)
 		logpath := path.Join(h.headersLogsDir, now)
