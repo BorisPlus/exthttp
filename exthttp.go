@@ -135,7 +135,10 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logInstance().Error(err.Error())
 		}
-		file.Write(jsonData)
+		_, err = file.Write(jsonData)
+		if err != nil {
+			logInstance().Error(err.Error())
+		}
 	}
 }
 
