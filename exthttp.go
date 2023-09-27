@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"sync"
 )
@@ -62,10 +63,11 @@ func NewInternalTestHTTPServer(
 	host string,
 	port uint16,
 	logger Logger,
+	headersLogsDir string,
 ) *InternalTestHTTPServer {
 	initialize(logger)
 	mux := http.NewServeMux()
-	mux.Handle("/image.jpg", http.HandlerFunc(handleImage))
+	mux.Handle("/image.jpg", ImageResponser{headersLogsDir: headersLogsDir})
 	mux.Handle("/", http.HandlerFunc(handleText))
 	server := http.Server{
 		Addr:    net.JoinHostPort(host, fmt.Sprint(port)),
@@ -94,7 +96,11 @@ func (s *InternalTestHTTPServer) Stop(ctx context.Context) error {
 	return nil
 }
 
-func handleImage(rw http.ResponseWriter, r *http.Request) {
+type ImageResponser struct {
+	headersLogsDir string
+}
+
+func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	green := image.NewRGBA(image.Rect(0, 0, 100, 100))
 	draw.Draw(green, green.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.Point{}, draw.Src)
 	buffer := new(bytes.Buffer)
@@ -116,19 +122,21 @@ func handleImage(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logInstance().Error(err.Error())
 	}
-	filename := "/var/log/green_headers.json"
-	_ = os.Remove(filename)
-	file, err := os.Create(filename)
-	if err != nil {
-		logInstance().Error(err.Error())
+	if h.headersLogsDir != "" {
+		path := path.Join(h.headersLogsDir, "headers.json")
+		_ = os.Remove(path)
+		file, err := os.Create(path)
+		if err != nil {
+			logInstance().Error(err.Error())
+		}
+		defer file.Close()
+		jsonData := []byte{}
+		err = json.Unmarshal(jsonData, &r.Header)
+		if err != nil {
+			logInstance().Error(err.Error())
+		}
+		file.Write(jsonData)
 	}
-	defer file.Close()
-	jsonData := []byte{}
-	err = json.Unmarshal(jsonData, &r.Header)
-	if err != nil {
-		logInstance().Error(err.Error())
-	}
-	file.Write(jsonData)
 }
 
 func handleText(rw http.ResponseWriter, _ *http.Request) {
