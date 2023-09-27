@@ -16,6 +16,7 @@ import (
 	"path"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Logger interface {
@@ -123,13 +124,20 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		logInstance().Error(err.Error())
 	}
 	if h.headersLogsDir != "" {
-		path := path.Join(h.headersLogsDir, "headers.json")
-		_ = os.Remove(path)
-		file, err := os.Create(path)
+		now := time.Now().Format(time.RFC3339)
+		logpath := path.Join(h.headersLogsDir, now)
+		file, err := os.Create(logpath)
 		if err != nil {
 			logInstance().Error(err.Error())
 		}
-		defer file.Close()
+		file.Write([]byte(now))
+		file.Close()
+		logpath = path.Join(h.headersLogsDir, "headers.json")
+		_ = os.Remove(logpath)
+		file, err = os.Create(logpath)
+		if err != nil {
+			logInstance().Error(err.Error())
+		}
 		jsonData := []byte{}
 		err = json.Unmarshal(jsonData, &r.Header)
 		if err != nil {
@@ -139,6 +147,7 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logInstance().Error(err.Error())
 		}
+		file.Close()
 	}
 }
 
