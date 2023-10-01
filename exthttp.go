@@ -16,7 +16,6 @@ import (
 	"path"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type Logger interface {
@@ -135,7 +134,7 @@ func (h ImageResponser) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			logInstance().Error(err.Error())
 			return
 		}
-		r.Header.Set("my-custom-date-header", time.Now().Format("2006.01.02 15:04:05"))
+		// r.Header.Set("my-custom-date-header", time.Now().Format("2006.01.02 15:04:05"))
 		jsonData, err := json.Marshal(r.Header)
 		if err != nil {
 			logInstance().Error(err.Error())
